@@ -1,0 +1,100 @@
+﻿@{
+    ViewData["Title"] = "Game";
+}
+@model Player
+
+<br />
+<h5 align="center" id="waiting" class="h5"></h5>
+<br />
+<br />
+
+<div align="center">
+    <table id="main-border" border="1">
+        @for (int i = 0; i < 3; ++i)
+        {
+            <tr>
+                @for (int j = 0; j < 3; ++j)
+                {
+                    <td>
+                        <div align="center">
+                            <img id="@i @j" width="100" height="100" border="0" onclick="Move(@i,@j)" asp-append-version="true"/>
+                        </div>
+                    </td>
+                }
+            </tr>
+        }
+    </table>
+    <br/>
+<div id="grid"></div>
+</div>
+<script src="~/js/microsoft/signalr/dist/browser/signalr.min.js"></script>
+<script>
+    connection = new signalR.HubConnectionBuilder().withUrl("/game").build();
+    let opponentId;
+    let number;
+
+    connection.start().catch(err => {
+        alert("couldnt connect");
+    })
+        .then(function () {
+            if ('@Model.creator' == 'True') {
+                connection.invoke("CreateGame").then(() => { });
+                document.getElementById("waiting").innerHTML = "Waiting opponent";
+            }
+            else {
+                opponentId = '@Model.idgame';
+                connection.invoke("ConnectUser", '@Model.idgame');
+            }
+        })
+
+    connection.on("GetNumber", (ocid) => {
+        number = ocid;
+    })
+
+    connection.on("ConnectUser", (ocid) => {
+        $("#waiting").empty();
+        opponentId = ocid;
+        alert("connect");
+    })
+
+    connection.on("OpponentDisconect", () => {
+        alert("Opponent disconnected");
+        window.location.href = '@Url.Content("~/Home/Index")';
+    })
+
+    function Move(a, b) {
+        connection.invoke("Move", a, b, opponentId, number).then((doit) => { if (doit) document.getElementById(a + ' ' + b).src = "/" + number + ".jpg";});
+    }
+
+    connection.on("Move", (a, b, k) => {
+        document.getElementById(a + ' ' + b).src = "/" + k + ".jpg";
+    })
+
+    connection.on("EndGame", (ocid) => {
+        console.log(delete connection);
+        let endGame;
+        if (ocid == 1)
+            endGame = "You win!";
+        else if (ocid == 0)
+            endGame = "Draw!";
+        else
+            endGame = "You lose!";
+        let grid = document.getElementById("grid");
+
+        let element = document.createElement("h5");
+        let text1 = document.createTextNode(endGame);
+        element.setAttribute("class", "h5");
+        element.appendChild(text1);
+        grid.appendChild(element);
+        grid.appendChild(document.createElement("br"));
+        let tile = document.createElement("button");
+        let text2 = document.createTextNode("Menu");
+        tile.appendChild(text2);
+        tile.setAttribute("onclick", "location.href='@Url.Action("FindGame", "Home")'");
+        tile.setAttribute("class","btn btn-outline-dark");
+        tile.setAttribute("align", "center");
+        grid.appendChild(tile);
+    })
+</script>
+
+

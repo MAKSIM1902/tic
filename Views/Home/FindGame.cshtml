@@ -1,0 +1,50 @@
+﻿@{
+    ViewData["Title"] = "Find Game";
+}
+<link rel="stylesheet" href="https://cdn.metroui.org.ua/v4/css/metro-all.min.css">
+<script src="https://cdn.metroui.org.ua/v4/js/metro.min.js"></script>
+
+<button type="button" class="btn btn-outline-dark" onclick="location.href='@Url.Action("Index", "Home")'">Back</button>
+<button type="button" class="btn btn-outline-dark" id="update-btn" onclick="UpdateList()">Update</button>
+<br/>
+<br/>
+<br/>
+<div id="available-games-grid">
+
+</div>
+
+
+<script src="~/js/microsoft/signalr/dist/browser/signalr.min.js"></script>
+<script>
+    let connection = new signalR.HubConnectionBuilder().withUrl("/find").build();
+
+    connection.start().catch(err => {
+        alert("couldnt connect");
+    }).then(UpdateList);
+
+    function UpdateList() {
+        let games;
+        connection.invoke("GetAllGames").then(function (data) {
+            games = data;
+            let grid = document.getElementById("available-games-grid");
+            $("#available-games-grid").empty()
+            games.forEach((game) => {
+                let tile = document.createElement("button");
+                let text = document.createTextNode(game);
+                tile.appendChild(text);
+                tile.setAttribute("id", game);
+                tile.setAttribute("onclick", "Connection(id)");
+                tile.setAttribute("class", "bg-black");
+                tile.setAttribute("data-role", "tile");
+                tile.setAttribute("data-size", "wide");
+                tile.setAttribute("data-group-title", "General");
+                grid.appendChild(tile);
+                grid.appendChild(document.createElement("br"));
+            })
+        });
+    }
+
+    function Connection(game) {
+        window.location.href = '@Url.Content("~/Home/Game?idGame=")' + game;
+    }
+</script>

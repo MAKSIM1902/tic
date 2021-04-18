@@ -1,0 +1,13 @@
+﻿@{
+    ViewData["Title"] = "Menu";
+}
+<button type="button" class="btn btn-outline-dark" onclick="Game()">CreateGame</button>
+
+<button type="button" class="btn btn-outline-dark" onclick="location.href='@Url.Action("FindGame", "Home")'">Findgame</button>
+
+
+<script>
+    function Game() {
+        window.location.href = '@Url.Content("~/Home/Game?idGame=")' + '';
+    }
+</script>
